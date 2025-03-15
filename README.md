@@ -59,10 +59,10 @@
 ├── lib/                    # 工具函数
 │   ├── markdown.ts         # Markdown处理
 │   └── three-utils.ts      # Three.js工具函数
-├── posts/                  # Markdown文章
 ├── public/                 # 静态资源
 │   ├── models/             # 3D模型
-│   └── images/             # 图片资源
+│   ├── images/             # 图片资源
+│   └── posts/              # Markdown文章 (部署到Vercel时必须放在public下)
 └── styles/                 # 样式文件
 ```
 
@@ -97,4 +97,28 @@ npm run dev
 
 ## 使用说明
 
-访问 http://localhost:3000 浏览博客主页。 # blog_3d
+访问 http://localhost:3000 浏览博客主页。
+
+## Vercel部署说明
+
+### 重要提示：文章目录位置
+
+在部署到Vercel时，由于Vercel的无服务器环境限制，**Markdown文章必须放在`public/posts`目录下**，而不是根目录的`posts`目录下。这是因为Vercel的服务器函数无法直接访问项目根目录的文件系统。
+
+### 部署步骤
+
+1. 确保你的Markdown文章已移动到`public/posts`目录下
+2. 在Vercel控制台创建新项目
+3. 连接到你的GitHub仓库
+4. 部署设置中无需特殊配置
+5. 点击"Deploy"按钮
+
+### 初始化内容
+
+部署完成后，如果没有任何文章，可以通过访问`/api/create-example`来创建一篇示例文章。
+
+### 常见问题排查
+
+1. 如果部署后看不到文章，检查浏览器控制台是否有错误信息
+2. 确认Markdown文件是否正确放置在`public/posts`目录下
+3. 通过`/api/create-example`创建示例文章，测试系统功能

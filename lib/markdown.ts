@@ -8,7 +8,7 @@ import html from 'remark-html';
 import type { Post } from '@/types';
 
 // 文章和图片目录路径
-const postsDirectory = path.join(process.cwd(), 'posts');
+const postsDirectory = path.join(process.cwd(), 'public', 'posts');
 const imagesDirectory = path.join(process.cwd(), 'public/images');
 
 // 确保目录存在
@@ -25,52 +25,71 @@ if (!fs.existsSync(postsDirectory)) {
  * @returns 所有文章的数组
  */
 export async function getPosts(): Promise<Post[]> {
-  console.log(`调用getPosts，文章目录: ${postsDirectory}`);
-  
-  // 确保posts目录存在
-  if (!fs.existsSync(postsDirectory)) {
-    console.log('文章目录不存在，创建空目录');
-    fs.mkdirSync(postsDirectory, { recursive: true });
-    return [];
-  }
-  
   try {
-    // 读取文章文件
+    // 检查目录是否存在
+    if (!fs.existsSync(postsDirectory)) {
+      console.log(`posts目录不存在，路径: ${postsDirectory}`);
+      return [];
+    }
+    
+    // 读取目录中的所有文件
     const fileNames = fs.readdirSync(postsDirectory);
     console.log(`找到 ${fileNames.length} 个文件`);
     
-    // 处理每个文章文件
-    const allPosts = fileNames
-      .filter(fileName => fileName.endsWith('.md'))
+    if (fileNames.length === 0) {
+      // 如果没有文件，返回空数组
+      return [];
+    }
+    
+    const allPostsData = fileNames
+      .filter(fileName => {
+        // 只处理.md文件
+        return fileName.endsWith('.md');
+      })
       .map(fileName => {
-        // 从文件名中获取slug
+        // 移除文件扩展名，用作slug
         const slug = fileName.replace(/\.md$/, '');
         
-        // 读取Markdown文件内容
+        // 读取Markdown文件
         const fullPath = path.join(postsDirectory, fileName);
-        const fileContents = fs.readFileSync(fullPath, 'utf8');
         
-        // 使用gray-matter解析元数据和内容
-        const { data, content } = matter(fileContents);
-        
-        // 验证必要字段
-        if (!data.title) {
-          console.warn(`文章 ${fileName} 缺少标题`);
+        try {
+          const fileContents = fs.readFileSync(fullPath, 'utf8');
+          
+          // 使用gray-matter解析Markdown中的元数据
+          const matterResult = matter(fileContents);
+          
+          // 确保标签是数组
+          const tags = Array.isArray(matterResult.data.tags) 
+            ? matterResult.data.tags 
+            : matterResult.data.tags 
+              ? [matterResult.data.tags] 
+              : [];
+          
+          // 返回包含元数据的对象
+          return {
+            slug,
+            title: matterResult.data.title || slug,
+            date: matterResult.data.date ? new Date(matterResult.data.date).toISOString() : new Date().toISOString(),
+            excerpt: matterResult.data.excerpt || '',
+            tags: tags,
+            content: matterResult.content
+          };
+        } catch (error) {
+          console.error(`处理文件时出错: ${fullPath}`, error);
+          return null;
         }
-        
-        // 构建文章对象
-        return {
-          slug,
-          title: data.title || '无标题',
-          date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
-          excerpt: data.excerpt || content.substr(0, 150) + '...',
-          tags: data.tags || [],
-          content: '', // 文章列表不需要完整内容
-        } as Post;
+      })
+      .filter(Boolean) // 过滤掉处理失败的文件
+      .sort((a, b) => {
+        // 根据日期排序，最新的文章排在前面
+        if (a && b) {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        }
+        return 0;
       });
     
-    // 按日期排序
-    return allPosts.sort((a, b) => (new Date(b.date).getTime() - new Date(a.date).getTime()));
+    return allPostsData as Post[];
   } catch (error) {
     console.error('获取文章列表时出错:', error);
     return [];
