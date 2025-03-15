@@ -1,0 +1,373 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 15, 15, 15;
+  
+  /* 苹果风格颜色变量 */
+  --apple-blue: 10, 132, 255;
+  --apple-green: 52, 199, 89;
+  --apple-indigo: 88, 86, 214;
+  --apple-orange: 255, 149, 0;
+  --apple-pink: 255, 55, 95;
+  --apple-purple: 191, 90, 242;
+  --apple-teal: 94, 234, 212;
+  --apple-yellow: 255, 204, 0;
+  --apple-gray1: 142, 142, 147;
+  --apple-gray2: 174, 174, 178;
+  --apple-gray3: 199, 199, 204;
+  --apple-gray4: 209, 209, 214;
+  --apple-gray5: 229, 229, 234;
+  --apple-gray6: 242, 242, 247;
+  
+  /* 苹果风格UI变量 */
+  --card-border-radius: 20px;
+  --button-border-radius: 12px;
+  --blur-strength: 15px;
+  --glass-opacity: 0.7;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 深色主题默认 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 15, 15, 15;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 自定义滚动条 - 苹果风格 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Canvas相关样式 */
+.canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* 苹果风格磨砂玻璃效果 */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18);
+}
+
+.glass-effect-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--button-border-radius);
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 内容覆盖层 - 苹果风格 */
+.content-overlay {
+  @apply glass-effect;
+  padding: 2rem;
+}
+
+/* 苹果风格标题 */
+.apple-title {
+  font-feature-settings: "salt";
+  letter-spacing: -0.02em;
+}
+
+.apple-subtitle {
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 苹果风格圆角卡片 */
+.apple-card {
+  @apply glass-effect;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.apple-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 苹果风格的按钮 */
+.apple-button {
+  @apply glass-button;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apple-button-primary {
+  background: rgba(var(--apple-blue), 0.8);
+}
+
+.apple-button-secondary {
+  background: rgba(var(--apple-gray1), 0.4);
+}
+
+/* 文章内容样式 - 苹果风格 */
+.article-content h1 {
+  @apply apple-title text-2xl font-bold mb-6 text-white;
+  letter-spacing: -0.025em;
+}
+
+.article-content h2 {
+  @apply apple-title text-xl font-bold mb-4 mt-8 text-white;
+  letter-spacing: -0.02em;
+}
+
+.article-content h3 {
+  @apply apple-title text-lg font-bold mb-3 mt-6 text-white;
+  letter-spacing: -0.015em;
+}
+
+.article-content p {
+  @apply mb-4 text-gray-100 leading-relaxed;
+  letter-spacing: -0.01em;
+}
+
+.article-content ul, .article-content ol {
+  @apply mb-4 ml-5;
+}
+
+.article-content li {
+  @apply mb-2 leading-relaxed;
+}
+
+.article-content code {
+  @apply bg-gray-800/50 px-1.5 py-0.5 rounded-md text-purple-300 font-mono text-sm;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.article-content pre {
+  @apply glass-effect-light p-4 rounded-xl mb-6 overflow-x-auto;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.article-content a {
+  @apply text-[rgb(var(--apple-teal))] hover:underline;
+  text-underline-offset: 2px;
+}
+
+.article-content blockquote {
+  @apply pl-4 italic border-l-2 border-[rgba(var(--apple-purple),0.7)] my-6 py-1;
+  background: rgba(var(--apple-purple), 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.article-content img {
+  @apply max-w-full h-auto rounded-2xl my-6 shadow-lg;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 优雅的过渡动画 */
+.fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 添加prose样式用于Markdown内容 */
+.prose {
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 65ch;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: white;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 {
+  font-size: 2.25em;
+  margin-top: 0;
+}
+
+.prose h2 {
+  font-size: 1.5em;
+}
+
+.prose h3 {
+  font-size: 1.25em;
+}
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose a {
+  color: rgb(var(--apple-teal));
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+}
+
+.prose strong {
+  color: white;
+  font-weight: 600;
+}
+
+.prose ol {
+  counter-reset: list-counter;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose ol > li {
+  position: relative;
+  counter-increment: list-counter;
+  padding-left: 1.75em;
+  margin-bottom: 0.5em;
+}
+
+.prose ol > li::before {
+  content: counter(list-counter) ".";
+  position: absolute;
+  left: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.prose ul {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+  list-style-type: disc;
+}
+
+.prose ul > li {
+  position: relative;
+  padding-left: 0.375em;
+  margin-bottom: 0.5em;
+}
+
+.prose img {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border-radius: 0.75rem;
+  max-width: 100%;
+  height: auto;
+}
+
+.prose blockquote {
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.8);
+  border-left: 4px solid rgba(255, 255, 255, 0.2);
+  padding-left: 1em;
+  margin: 1.5em 0;
+}
+
+.prose code {
+  color: #f8f8f2;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.prose pre {
+  color: #f8f8f2;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5em;
+  padding: 1em;
+  margin: 1.5em 0;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.9em;
+  color: inherit;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 2em 0;
+} 
