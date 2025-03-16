@@ -184,13 +184,15 @@ function SceneContainer({ children }: SceneContainerProps) {
         console.log('Canvas created, scene:', scene);
       }}
       onClick={handleCanvasClick}
-      // 降低轨道控制干扰
-      raycaster={{
-        computeOffsets: (_, __) => ({
-          offsetX: 0,
-          offsetY: 0
-        })
-      }}
+      // 降低轨道控制干扰，使用类型断言解决类型问题
+      raycaster={
+        {
+          computeOffsets: (_: any, __: any) => ({
+            offsetX: 0,
+            offsetY: 0
+          })
+        } as any
+      }
     >
       {/* 添加静态粒子背景 */}
       <ParticleSystem />
