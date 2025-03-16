@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, Float, Text, OrbitControls, useTexture, Sparkles } from '@react-three/drei';
 import { Vector3, Group, Mesh, MathUtils, Color } from 'three';
@@ -177,18 +177,16 @@ function ArticleCard({
   rotation: [number, number, number];
   index: number;
 }) {
-  const cardRef = useRef<Group>(null);
-  const [node, setNode] = useState<Group | null>(null);
-  // 从framer-motion正确导入useAnimation
+  // 使用useState保存引用，而不是useRef，避免read-only问题
+  const [cardNode, setCardNode] = useState<Group | null>(null);
   const animationControls = useAnimation();
   
-  // 在useEffect中处理动画逻辑
+  // 使用节点状态而不是ref
   useEffect(() => {
-    if (cardRef.current) {
-      // 手动处理动画逻辑
-      // ...
+    if (cardNode) {
+      // 如果需要可以在这里添加动画逻辑
     }
-  }, [cardRef]); // 移除注释中的其他依赖项
+  }, [cardNode]);
 
   // 获取标签颜色
   const getTagColor = (tag?: string) => {
@@ -210,16 +208,11 @@ function ArticleCard({
 
   return (
     <motion.group
-      ref={(node) => {
-        // 使用函数形式的ref解决类型问题
-        if (node) {
-          cardRef.current = node;
-          setNode(node);
-        }
-      }}
+      // 使用类型断言解决类型问题，避免直接修改ref.current
+      ref={(node: any) => setCardNode(node)}
       position={position}
       rotation={rotation}
-      variants={cardVariants} // 使用定义好的variants
+      variants={cardVariants}
       whileHover="hover"
       whileTap="tap"
     >
