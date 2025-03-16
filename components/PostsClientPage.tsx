@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { Post } from '@/types';
-import SceneContainer from './3d/SceneContainer';
 import FloatingNav from './ui/FloatingNav';
+
+// 延迟加载3D场景容器
+const LazySceneContainer = lazy(() => import('./3d/SceneContainer'));
 
 // 3D背景场景组件
 function PostsScene() {
@@ -117,9 +119,11 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
     <div className="min-h-screen relative">
       {/* 3D背景 */}
       <div className="fixed inset-0 -z-10">
-        <SceneContainer>
-          <PostsScene />
-        </SceneContainer>
+        <Suspense fallback={<div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />}>
+          <LazySceneContainer>
+            <PostsScene />
+          </LazySceneContainer>
+        </Suspense>
       </div>
       
       {/* 悬浮导航 */}

@@ -1,14 +1,16 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import SceneContainer from '@/components/3d/SceneContainer';
 import FloatingNav from '@/components/ui/FloatingNav';
 import type { Post } from '@/types';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text, Html } from '@react-three/drei';
+
+// 延迟加载3D场景容器
+const LazySceneContainer = lazy(() => import('@/components/3d/SceneContainer'));
 
 // 3D创意标签组件
 function CreativeTags({ posts }: { posts: Post[] }) {
@@ -222,9 +224,11 @@ export default function ClientPage({ posts }: ClientPageProps) {
     <main className="min-h-screen relative overflow-hidden">
       {/* 3D场景容器，固定在背景 */}
       <div ref={sceneRef} className="canvas-container absolute inset-0" style={{ zIndex: 0 }}>
-        <SceneContainer>
-          <CreativeTags posts={displayPosts} />
-        </SceneContainer>
+        <Suspense fallback={<div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />}>
+          <LazySceneContainer>
+            <CreativeTags posts={displayPosts} />
+          </LazySceneContainer>
+        </Suspense>
       </div>
 
       {/* 悬浮导航按钮 */}

@@ -83,9 +83,16 @@ export default function PostClientPage({ post, isLoading = false, error }: PostC
       <div className="min-h-screen relative bg-gray-900">
         {/* 3D背景 */}
         <div className="fixed inset-0 -z-10">
-          <SceneContainer>
-            <ArticleBackground />
-          </SceneContainer>
+          {is3DEnabled ? (
+            <Suspense fallback={<div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />}>
+              <LazySceneContainer>
+                <ArticleBackground />
+              </LazySceneContainer>
+            </Suspense>
+          ) : (
+            // 降级为简单渐变背景
+            <div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />
+          )}
         </div>
         
         {/* 悬浮导航 */}
@@ -116,9 +123,16 @@ export default function PostClientPage({ post, isLoading = false, error }: PostC
       <div className="min-h-screen relative bg-gray-900">
         {/* 3D背景 */}
         <div className="fixed inset-0 -z-10">
-          <SceneContainer>
-            <ArticleBackground />
-          </SceneContainer>
+          {is3DEnabled ? (
+            <Suspense fallback={<div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />}>
+              <LazySceneContainer>
+                <ArticleBackground />
+              </LazySceneContainer>
+            </Suspense>
+          ) : (
+            // 降级为简单渐变背景
+            <div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />
+          )}
         </div>
         
         {/* 悬浮导航 */}
@@ -146,10 +160,10 @@ export default function PostClientPage({ post, isLoading = false, error }: PostC
   // 显示文章内容
   return (
     <div className="min-h-screen relative bg-gray-900">
-      {/* 3D背景 - 添加Suspense和懒加载 */}
+      {/* 3D背景 */}
       <div className="fixed inset-0 -z-10">
         {is3DEnabled ? (
-          <Suspense fallback={<div className="w-full h-full bg-gray-900" />}>
+          <Suspense fallback={<div className="w-full h-full bg-gradient-to-b from-gray-900 to-blue-900" />}>
             <LazySceneContainer>
               <ArticleBackground />
             </LazySceneContainer>
