@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, Float, Text, OrbitControls, useTexture, Sparkles } from '@react-three/drei';
 import { Vector3, Group, Mesh, MathUtils, Color } from 'three';
-import { motion } from 'framer-motion-3d';
+import { motion, useAnimation } from 'framer-motion-3d';
 import { Post } from '@/lib/types';
 
 type BlogHomeSceneProps = {
@@ -165,38 +165,16 @@ function ArticleCard({
   index: number;
 }) {
   const cardRef = useRef<Group>(null);
-  const matRef = useRef<any>(null);
-  const glowIntensityRef = useRef(0);
+  const [node, setNode] = useState<Group | null>(null);
+  const animationControls = useAnimation();
   
-  // 为卡片添加闪光效果
-  useFrame((state) => {
-    if (matRef.current) {
-      glowIntensityRef.current = MathUtils.lerp(
-        glowIntensityRef.current,
-        0.05 + Math.sin(state.clock.elapsedTime * 0.5 + index) * 0.05,
-        0.1
-      );
-      matRef.current.emissiveIntensity = glowIntensityRef.current;
+  // 在useEffect中处理动画逻辑
+  useEffect(() => {
+    if (cardRef.current) {
+      // 手动处理动画逻辑
+      // ...
     }
-  });
-
-  // 动画变体
-  const variants = {
-    initial: { scale: 0, opacity: 0 },
-    animate: { 
-      scale: 1, 
-      opacity: 1,
-      transition: { 
-        delay: index * 0.3,
-        duration: 0.8,
-        ease: [0.34, 1.56, 0.64, 1] // 弹性缓动函数，类似苹果风格
-      } 
-    },
-    hover: { 
-      scale: 1.05,
-      transition: { duration: 0.3, ease: [0.34, 1.56, 0.64, 1] } 
-    },
-  };
+  }, [cardRef, /* 其他依赖项 */]);
 
   // 获取标签颜色
   const getTagColor = (tag?: string) => {
@@ -218,26 +196,20 @@ function ArticleCard({
 
   return (
     <motion.group
-      ref={cardRef}
+      ref={cardRef as any}
       position={position}
       rotation={rotation}
       variants={variants}
-      initial="initial"
-      animate="animate"
-      whileHover="hover"
     >
       {/* 卡片背景 */}
       <mesh position={[0, 0, -0.05]} receiveShadow castShadow>
         <boxGeometry args={[2.4, 1.4, 0.1]} />
         <meshStandardMaterial 
-          ref={matRef}
           color={cardColor}
           metalness={0.8}
           roughness={0.2}
           opacity={0.85}
           transparent 
-          emissive={cardColor}
-          emissiveIntensity={0.2}
         />
       </mesh>
 
