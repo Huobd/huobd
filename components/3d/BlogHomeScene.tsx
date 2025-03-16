@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, forwardRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, Float, Text, OrbitControls, useTexture, Sparkles } from '@react-three/drei';
 import { Vector3, Group, Mesh, MathUtils, Color } from 'three';
@@ -14,7 +14,7 @@ type BlogHomeSceneProps = {
 export default function BlogHomeScene({ posts = [] }: BlogHomeSceneProps) {
   const { camera, pointer, viewport } = useThree();
   const orbitControlsRef = useRef<any>(null);
-  const groupRef = useRef<Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   // 根据鼠标位置微调相机
   useFrame((state) => {
@@ -60,7 +60,7 @@ export default function BlogHomeScene({ posts = [] }: BlogHomeSceneProps) {
       <pointLight position={[-10, -10, -10]} intensity={0.5} color="#c77dff" />
 
       {/* 主场景内容 */}
-      <group ref={groupRef}>
+      <group ref={groupRef as any} position={[0, 0, 0]}>
         {/* 闪光效果 */}
         <Sparkles 
           count={200} 
