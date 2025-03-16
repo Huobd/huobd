@@ -4,7 +4,8 @@ import { useRef, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, Float, Text, OrbitControls, useTexture, Sparkles } from '@react-three/drei';
 import { Vector3, Group, Mesh, MathUtils, Color } from 'three';
-import { motion, useAnimation } from 'framer-motion-3d';
+import { motion } from 'framer-motion-3d';
+import { useAnimation } from 'framer-motion';
 import { Post } from '@/lib/types';
 
 type BlogHomeSceneProps = {
@@ -153,6 +154,18 @@ function ArticleCards({ posts }: { posts: Post[] }) {
   );
 }
 
+// 定义缺失的variants变量
+const cardVariants = {
+  hover: {
+    scale: 1.05,
+    transition: { duration: 0.3 }
+  },
+  tap: {
+    scale: 0.95,
+    transition: { duration: 0.1 }
+  }
+};
+
 function ArticleCard({
   post,
   position,
@@ -166,6 +179,7 @@ function ArticleCard({
 }) {
   const cardRef = useRef<Group>(null);
   const [node, setNode] = useState<Group | null>(null);
+  // 从framer-motion正确导入useAnimation
   const animationControls = useAnimation();
   
   // 在useEffect中处理动画逻辑
@@ -174,7 +188,7 @@ function ArticleCard({
       // 手动处理动画逻辑
       // ...
     }
-  }, [cardRef, /* 其他依赖项 */]);
+  }, [cardRef]); // 移除注释中的其他依赖项
 
   // 获取标签颜色
   const getTagColor = (tag?: string) => {
@@ -196,10 +210,18 @@ function ArticleCard({
 
   return (
     <motion.group
-      ref={cardRef as any}
+      ref={(node) => {
+        // 使用函数形式的ref解决类型问题
+        if (node) {
+          cardRef.current = node;
+          setNode(node);
+        }
+      }}
       position={position}
       rotation={rotation}
-      variants={variants}
+      variants={cardVariants} // 使用定义好的variants
+      whileHover="hover"
+      whileTap="tap"
     >
       {/* 卡片背景 */}
       <mesh position={[0, 0, -0.05]} receiveShadow castShadow>
