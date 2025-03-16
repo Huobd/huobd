@@ -18,6 +18,7 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
   const [showTagCloud, setShowTagCloud] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
   const debugInfoRef = useRef<HTMLDivElement | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   
-  // 导航项
+  // 导航项 - 移除了发布文章选项
   const navItems = [
     { path: '/', label: '首页', icon: '🏠', color: 'from-purple-400 to-blue-500' },
     { path: '/posts', label: '文章列表', icon: '📚', color: 'from-pink-400 to-red-500' },
@@ -34,21 +35,54 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
   
   // 获取所有标签
   useEffect(() => {
+    let isMounted = true;
+    let loadingTimeout: NodeJS.Timeout;
+    
     async function fetchTags() {
+      if (!showTagCloud) return; // 只在显示标签云时加载标签
+      
       try {
-        setLoadingTags(true);
+        // 设置最小加载时间，避免闪烁
+        loadingTimeout = setTimeout(() => {
+          if (isMounted) setLoadingTags(true);
+        }, 300);
+        
+        setTagError(null);
+        console.log('开始获取标签...');
+        
         const allTags = await getAllTags();
-        setTags(Array.isArray(allTags) ? allTags : []);
+        console.log('获取到标签数据:', allTags);
+        
+        if (isMounted) {
+          clearTimeout(loadingTimeout);
+          
+          if (Array.isArray(allTags)) {
+            setTags(allTags);
+          } else {
+            console.error('标签数据不是数组:', allTags);
+            setTags([]);
+            setTagError('标签数据格式错误');
+          }
+          setLoadingTags(false);
+        }
       } catch (error) {
         console.error('获取标签失败:', error);
-        setTags([]);
-      } finally {
-        setLoadingTags(false);
+        if (isMounted) {
+          clearTimeout(loadingTimeout);
+          setTags([]);
+          setTagError('获取标签失败，请稍后再试');
+          setLoadingTags(false);
+        }
       }
     }
     
     fetchTags();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
+    };
+  }, [showTagCloud]); // 当标签云显示状态变化时重新获取
   
   // 点击外部区域关闭菜单和标签云
   useEffect(() => {
@@ -115,26 +149,31 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
     debugInfo.style.zIndex = '9999';
     debugInfo.style.fontSize = '12px';
     debugInfo.style.fontFamily = 'monospace';
-    debugInfo.textContent = `路径: ${pathname}, 展开: ${isExpanded}, 标签云: ${showTagCloud}`;
+    debugInfo.textContent = `路径: ${pathname}, 展开: ${isExpanded}, 标签云: ${showTagCloud}, 标签数: ${tags.length}`;
     
     // 安全地添加到DOM
     if (document.body && !document.getElementById('nav-debug-info')) {
       document.body.appendChild(debugInfo);
+      debugInfoRef.current = debugInfo;
     }
     
     return () => {
       // 安全地从DOM移除
-      const element = document.getElementById('nav-debug-info');
-      if (element && document.body.contains(element)) {
-        document.body.removeChild(element);
+      if (debugInfoRef.current && document.body.contains(debugInfoRef.current)) {
+        document.body.removeChild(debugInfoRef.current);
       }
     };
-  }, [pathname, isExpanded, showTagCloud, showDebug]);
+  }, [pathname, isExpanded, showTagCloud, showDebug, tags.length]);
   
   // 处理标签点击
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = (tag: string, e: React.MouseEvent) => {
+    e.preventDefault(); // 阻止默认行为
+    e.stopPropagation(); // 阻止事件冒泡
+    
     setShowTagCloud(false);
-    router.push(`/posts?tag=${encodeURIComponent(tag)}`);
+    
+    // 使用window.location直接跳转，避免Next.js路由问题
+    window.location.href = `/posts?tag=${encodeURIComponent(tag)}`;
   };
   
   // 处理导航项点击
@@ -213,7 +252,7 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
             </motion.div>
           </button>
 
-          {/* 菜单项 */}
+          {/* 菜单项 - 只显示图标 */}
           <motion.div
             animate={{
               opacity: isExpanded ? 1 : 0,
@@ -227,73 +266,35 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
               <div key={item.path}>
                 {item.special === 'tags' ? (
                   <motion.div
-                    className={`flex items-center gap-3 px-4 py-3 my-1 rounded-xl transition-all cursor-pointer
+                    className={`flex items-center justify-center w-14 h-14 md:w-14 md:h-14 rounded-full transition-all cursor-pointer
                       ${showTagCloud 
                         ? 'bg-gradient-to-r ' + item.color + ' text-white' 
-                        : 'hover:bg-white/20 text-white'
+                        : 'bg-gray-800/50 hover:bg-white/10 text-white'
                       }`}
                     onHoverStart={() => handleNavItemHover(item)}
                     onHoverEnd={() => handleNavItemHoverEnd(item)}
                     onClick={(e) => handleNavItemClick(item, e)}
-                    whileHover={{ x: 5 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="font-medium">{item.label}</span>
-                    
-                    {showTagCloud && (
-                      <motion.span 
-                        className="ml-auto text-sm opacity-80"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        展开中
-                      </motion.span>
-                    )}
-                    
-                    {hovered === item.path && !showTagCloud && (
-                      <motion.span 
-                        className="ml-auto"
-                        initial={{ opacity: 0, x: -5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                      >
-                        →
-                      </motion.span>
-                    )}
+                    <span className="text-2xl">{item.icon}</span>
+                    <span className="sr-only">{item.label}</span>
                   </motion.div>
                 ) : (
                   <Link href={item.path}>
                     <motion.div
-                      className={`flex items-center gap-3 px-4 py-3 my-1 rounded-xl transition-all
+                      className={`flex items-center justify-center w-14 h-14 md:w-14 md:h-14 rounded-full transition-all
                         ${pathname === item.path 
                           ? 'bg-gradient-to-r ' + item.color + ' text-white' 
-                          : 'hover:bg-white/20 text-white'
+                          : 'bg-gray-800/50 hover:bg-white/10 text-white'
                         }`}
                       onHoverStart={() => setHovered(item.path)}
                       onHoverEnd={() => setHovered(null)}
-                      whileHover={{ x: 5 }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                     >
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="font-medium">{item.label}</span>
-                      
-                      {pathname === item.path && (
-                        <motion.span 
-                          className="ml-auto text-sm opacity-80"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          当前
-                        </motion.span>
-                      )}
-                      
-                      {hovered === item.path && pathname !== item.path && (
-                        <motion.span 
-                          className="ml-auto"
-                          initial={{ opacity: 0, x: -5 }}
-                          animate={{ opacity: 1, x: 0 }}
-                        >
-                          →
-                        </motion.span>
-                      )}
+                      <span className="text-2xl">{item.icon}</span>
+                      <span className="sr-only">{item.label}</span>
                     </motion.div>
                   </Link>
                 )}
@@ -361,6 +362,19 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-4"></div>
                     <p className="text-white">加载标签中...</p>
                   </div>
+                ) : tagError ? (
+                  <div className="text-center text-white">
+                    <p className="text-xl text-red-400">{tagError}</p>
+                    <button 
+                      onClick={() => {
+                        setTagError(null);
+                        setShowTagCloud(true); // 触发重新加载
+                      }}
+                      className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-full text-white"
+                    >
+                      重试
+                    </button>
+                  </div>
                 ) : tags.length > 0 ? (
                   <div className="flex flex-wrap justify-center items-center gap-4 max-w-4xl">
                     {tags.map((tag, index) => (
@@ -381,7 +395,7 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
                           boxShadow: '0 0 15px rgba(255,255,255,0.3)' 
                         }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => handleTagClick(tag)}
+                        onClick={(e) => handleTagClick(tag, e)}
                         style={{ 
                           fontSize: `${Math.max(1, Math.min(2, 1 + tag.length * 0.05))}rem`,
                         }}
@@ -403,4 +417,4 @@ export default function FloatingNav({ defaultExpanded = false }: FloatingNavProp
       </AnimatePresence>
     </>
   );
-} 
+}

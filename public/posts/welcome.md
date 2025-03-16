@@ -1,6 +1,6 @@
 ---
 title: 欢迎来到我的3D博客空间
-date: 2023-11-10T08:00:00.000Z
+date: 2025-03-16T12:43:35.825Z
 excerpt: 这是一篇示例文章，展示了Markdown的各种格式和用法。
 tags: [示例, Markdown, 3D博客]
 ---
@@ -8,6 +8,8 @@ tags: [示例, Markdown, 3D博客]
 # 欢迎来到我的3D博客空间
 
 这是一个使用Next.js 14和React Three Fiber构建的创意3D博客系统。在这个空间中，你可以探索各种思想和创意，享受沉浸式的阅读体验。
+
+![3D博客空间示例](example-space.jpg)
 
 ## Markdown的强大功能
 
@@ -62,4 +64,4 @@ function welcome() {
 
 尝试添加更多的文章，探索3D空间，自定义你的博客外观和交互方式!
 
-祝你使用愉快! 
+祝你使用愉快!

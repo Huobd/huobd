@@ -151,7 +151,7 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
                     <span className="mr-2">标签:</span>
                     <span className="font-medium">{decodeURIComponent(activeTag)}</span>
                     <button 
-                      onClick={() => router.push('/posts')}
+                      onClick={() => window.location.href = '/posts'}
                       className="ml-2 bg-blue-400/20 hover:bg-blue-400/40 rounded-full w-5 h-5 inline-flex items-center justify-center"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -197,13 +197,17 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
                 className="flex flex-wrap justify-center gap-2 mb-8"
               >
                 {allTags.map((tag, index) => (
-                  <Link 
+                  <a 
                     key={index} 
                     href={`/posts?tag=${encodeURIComponent(tag)}`}
                     className="bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 hover:text-white px-3 py-1 rounded-full text-sm transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/posts?tag=${encodeURIComponent(tag)}`;
+                    }}
                   >
                     {tag}
-                  </Link>
+                  </a>
                 ))}
               </motion.div>
             )}
@@ -227,7 +231,14 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Link href={`/posts/${post.slug}`} key={post.slug || `link-${index}`}>
+                  <a 
+                    href={`/posts/${post.slug}`} 
+                    key={post.slug || `link-${index}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/posts/${post.slug}`;
+                    }}
+                  >
                     <div className="bg-gray-800/50 hover:bg-gray-800/80 border border-gray-700 rounded-xl overflow-hidden h-full transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1">
                       <div className="p-6">
                         <div className="flex items-center mb-4">
@@ -248,11 +259,11 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
                             {post.tags.map((tag, tagIndex) => (
                               <span 
                                 key={tagIndex}
-                                className="text-xs px-2 py-1 bg-blue-900/40 text-blue-200 rounded-full"
+                                className="bg-gray-700/50 text-gray-300 px-2 py-1 rounded-full text-xs"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  e.stopPropagation(); // 防止事件冒泡
-                                  router.push(`/posts?tag=${encodeURIComponent(tag)}`);
+                                  e.stopPropagation();
+                                  window.location.href = `/posts?tag=${encodeURIComponent(tag)}`;
                                 }}
                               >
                                 {tag}
@@ -262,7 +273,7 @@ export default function PostsClientPage({ posts = [], activeTag }: PostsClientPa
                         )}
                       </div>
                     </div>
-                  </Link>
+                  </a>
                 </motion.div>
               ))}
             </div>

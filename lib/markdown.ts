@@ -20,11 +20,32 @@ if (!fs.existsSync(postsDirectory)) {
   fs.mkdirSync(postsDirectory, { recursive: true });
 }
 
+// 添加标签缓存
+let tagsCache: string[] | null = null;
+let tagsCacheTime: number = 0;
+const CACHE_DURATION = 60 * 60 * 1000; // 1小时缓存
+
+// 添加文章缓存
+const postCache = new Map<string, {post: Post, timestamp: number}>();
+const POST_CACHE_DURATION = 30 * 60 * 1000; // 30分钟缓存
+
+// 添加文章列表缓存
+let postsCache: Post[] | null = null;
+let postsCacheTime: number = 0;
+const POSTS_CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
 /**
  * 获取所有文章的元数据和内容
  * @returns 所有文章的数组
  */
 export async function getPosts(): Promise<Post[]> {
+  // 如果缓存有效，直接返回缓存
+  if (postsCache && (Date.now() - postsCacheTime < POSTS_CACHE_DURATION)) {
+    console.log('使用缓存的文章列表');
+    return postsCache;
+  }
+  
+  console.log('重新读取所有文章...');
   try {
     // 检查目录是否存在
     if (!fs.existsSync(postsDirectory)) {
@@ -41,45 +62,46 @@ export async function getPosts(): Promise<Post[]> {
       return [];
     }
     
-    const allPostsData = fileNames
-      .filter(fileName => {
-        // 只处理.md文件
-        return fileName.endsWith('.md');
-      })
-      .map(fileName => {
-        // 移除文件扩展名，用作slug
-        const slug = fileName.replace(/\.md$/, '');
+    // 使用Promise.all并行处理所有文件
+    const markdownFiles = fileNames.filter(fileName => fileName.endsWith('.md'));
+    
+    const postsPromises = markdownFiles.map(async fileName => {
+      // 移除文件扩展名，用作slug
+      const slug = fileName.replace(/\.md$/, '');
+      
+      // 读取Markdown文件
+      const fullPath = path.join(postsDirectory, fileName);
+      
+      try {
+        const fileContents = fs.readFileSync(fullPath, 'utf8');
         
-        // 读取Markdown文件
-        const fullPath = path.join(postsDirectory, fileName);
+        // 使用gray-matter解析Markdown中的元数据
+        const matterResult = matter(fileContents);
         
-        try {
-          const fileContents = fs.readFileSync(fullPath, 'utf8');
-          
-          // 使用gray-matter解析Markdown中的元数据
-          const matterResult = matter(fileContents);
-          
-          // 确保标签是数组
-          const tags = Array.isArray(matterResult.data.tags) 
-            ? matterResult.data.tags 
-            : matterResult.data.tags 
-              ? [matterResult.data.tags] 
-              : [];
-          
-          // 返回包含元数据的对象
-          return {
-            slug,
-            title: matterResult.data.title || slug,
-            date: matterResult.data.date ? new Date(matterResult.data.date).toISOString() : new Date().toISOString(),
-            excerpt: matterResult.data.excerpt || '',
-            tags: tags,
-            content: matterResult.content
-          };
-        } catch (error) {
-          console.error(`处理文件时出错: ${fullPath}`, error);
-          return null;
-        }
-      })
+        // 确保标签是数组
+        const tags = Array.isArray(matterResult.data.tags) 
+          ? matterResult.data.tags 
+          : matterResult.data.tags 
+            ? [matterResult.data.tags] 
+            : [];
+        
+        // 返回包含元数据的对象（不包含完整内容，减少内存使用）
+        return {
+          slug,
+          title: matterResult.data.title || slug,
+          date: matterResult.data.date ? new Date(matterResult.data.date).toISOString() : new Date().toISOString(),
+          excerpt: matterResult.data.excerpt || '',
+          tags: tags,
+          content: '' // 只在文章列表页不需要完整内容
+        };
+      } catch (error) {
+        console.error(`处理文件时出错: ${fullPath}`, error);
+        return null;
+      }
+    });
+    
+    // 等待所有处理完成
+    const allPostsData = (await Promise.all(postsPromises))
       .filter(Boolean) // 过滤掉处理失败的文件
       .sort((a, b) => {
         // 根据日期排序，最新的文章排在前面
@@ -89,6 +111,10 @@ export async function getPosts(): Promise<Post[]> {
         return 0;
       });
     
+    // 更新缓存
+    postsCache = allPostsData as Post[];
+    postsCacheTime = Date.now();
+    
     return allPostsData as Post[];
   } catch (error) {
     console.error('获取文章列表时出错:', error);
@@ -96,20 +122,21 @@ export async function getPosts(): Promise<Post[]> {
   }
 }
 
-/**
- * 处理Markdown内容为HTML
- * @param markdown Markdown格式的文本
- * @returns 转换后的HTML字符串
- */
+// 优化Markdown处理函数
+let remarkProcessor: any = null;
+
 async function processMarkdown(markdown: string): Promise<string> {
   try {
     // 图片路径修正
     let processedMarkdown = markdown.replace(/!\[(.*?)\]\(\.\/images\/(.*?)\)/g, '![$1](/images/$2)');
     
-    // 使用remark处理Markdown为HTML
-    const result = await remark()
-      .use(html, { sanitize: false }) // 不进行HTML净化，保留原始标签
-      .process(processedMarkdown);
+    // 延迟初始化remark，只创建一次实例
+    if (!remarkProcessor) {
+      remarkProcessor = remark().use(html, { sanitize: false });
+    }
+    
+    // 使用已初始化的处理器
+    const result = await remarkProcessor.process(processedMarkdown);
     
     return result.toString();
   } catch (error) {
@@ -119,12 +146,17 @@ async function processMarkdown(markdown: string): Promise<string> {
 }
 
 /**
- * 获取单篇文章的数据
- * @param slug 文章的唯一标识
- * @returns 文章对象或null
+ * 获取单篇文章的数据（优化版）
  */
 export async function getPost(slug: string): Promise<Post | null> {
   console.log(`调用getPost，获取文章: ${slug}`);
+  
+  // 检查缓存
+  const cached = postCache.get(slug);
+  if (cached && (Date.now() - cached.timestamp < POST_CACHE_DURATION)) {
+    console.log(`使用缓存的文章: ${slug}`);
+    return cached.post;
+  }
   
   try {
     // 检查文章文件是否存在
@@ -134,7 +166,12 @@ export async function getPost(slug: string): Promise<Post | null> {
       
       // 如果是示例文章，返回硬编码内容
       if (slug.startsWith('example-')) {
-        return await getExamplePost(slug);
+        const examplePost = await getExamplePost(slug);
+        if (examplePost) {
+          // 缓存示例文章
+          postCache.set(slug, {post: examplePost, timestamp: Date.now()});
+        }
+        return examplePost;
       }
       
       return null;
@@ -152,8 +189,8 @@ export async function getPost(slug: string): Promise<Post | null> {
     const processedContent = await processMarkdown(content);
     console.log(`Markdown处理后内容长度: ${processedContent.length}`);
     
-    // 返回文章对象
-    return {
+    // 创建文章对象
+    const post: Post = {
       slug,
       title: data.title || '无标题',
       date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
@@ -161,6 +198,11 @@ export async function getPost(slug: string): Promise<Post | null> {
       tags: data.tags || [],
       content: processedContent, // 完整的HTML内容
     };
+    
+    // 缓存文章
+    postCache.set(slug, {post, timestamp: Date.now()});
+    
+    return post;
   } catch (error) {
     console.error(`获取文章 ${slug} 时出错:`, error);
     return null;
@@ -366,10 +408,16 @@ animate();
 }
 
 /**
- * 获取所有文章中的标签
- * @returns 所有标签的数组
+ * 获取所有标签并缓存结果
  */
 export async function getAllTags(): Promise<string[]> {
+  // 如果缓存有效，直接返回缓存
+  if (tagsCache && (Date.now() - tagsCacheTime < CACHE_DURATION)) {
+    console.log('使用缓存的标签数据');
+    return tagsCache;
+  }
+  
+  console.log('重新计算标签...');
   try {
     const posts = await getPosts();
     
@@ -378,14 +426,24 @@ export async function getAllTags(): Promise<string[]> {
       return [];
     }
     
-    // 从所有文章中提取标签
-    const allTags = posts
-      .filter(post => post.tags && Array.isArray(post.tags) && post.tags.length > 0)
-      .flatMap(post => post.tags);
+    // 使用Set进行去重，提高性能
+    const tagSet = new Set<string>();
     
-    // 去重并排序
-    const uniqueTags = Array.from(new Set(allTags));
-    return uniqueTags.sort();
+    // 一次性遍历所有文章收集标签
+    posts.forEach(post => {
+      if (post.tags && Array.isArray(post.tags)) {
+        post.tags.forEach(tag => tagSet.add(tag));
+      }
+    });
+    
+    // 转换为数组并排序
+    const uniqueTags = Array.from(tagSet).sort();
+    
+    // 更新缓存
+    tagsCache = uniqueTags;
+    tagsCacheTime = Date.now();
+    
+    return uniqueTags;
   } catch (error) {
     console.error('获取所有标签时出错:', error);
     return [];
