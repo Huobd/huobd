@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     
     if (!post) {
       return {
-        title: '文章不存在 - 3D创意博客',
+        title: '文章不存在 - 麻糖的博客',
         description: '找不到请求的文章',
       };
     }
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const safePost = post;
     
     return {
-      title: `${safePost.title} - 3D创意博客`,
+      title: `${safePost.title} - 麻糖的博客`,
       description: safePost.excerpt || safePost.title,
     };
   } catch (error) {
