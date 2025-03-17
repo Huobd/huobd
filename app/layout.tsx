@@ -18,8 +18,8 @@ const robotoMono = Roboto_Mono({
 
 // 站点元数据
 export const metadata: Metadata = {
-  title: '茂宇的人生博客',
-  description: '你无需经常提醒自己为什么不应该等待， 别等待就对了',
+  title: '麻糖的博客',
+  description: '风虽大，都绕过了我的灵魂',
 };
 
 export default function RootLayout({
