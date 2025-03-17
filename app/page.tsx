@@ -20,4 +20,4 @@ export default async function Home() {
       <ClientPage posts={posts} />
     </>
   );
-} 
+}
