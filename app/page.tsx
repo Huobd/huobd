@@ -3,8 +3,8 @@ import { getPosts } from '@/lib/markdown';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '茂宇的人生博客',
-  description: '你无需经常提醒自己为什么不应该等待， 别等待就对了',
+  title: '麻糖的博客',
+  description: '风虽大都绕过了我的灵魂',
 };
 
 // 确保页面是动态渲染的，使脚本正确初始化
