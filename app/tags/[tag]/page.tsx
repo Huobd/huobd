@@ -18,7 +18,7 @@ export async function generateStaticParams() {
 // 生成元数据
 export async function generateMetadata({ params }: { params: { tag: string } }): Promise<Metadata> {
   return {
-    title: `${params.tag} - 3D创意博客`,
+    title: `${params.tag} - 麻糖的博客`,
     description: `浏览所有关于${params.tag}的文章`,
   };
 }
