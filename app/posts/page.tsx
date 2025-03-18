@@ -3,7 +3,7 @@ import PostsClientPage from '@/components/PostsClientPage';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '文章列表 - 茂宇的人生博客',
+  title: '文章列表 - 麻糖的博客',
   description: '浏览所有博客文章，按标签或关键词筛选',
 };
 
