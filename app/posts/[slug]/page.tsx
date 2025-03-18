@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   } catch (error) {
     console.error(`生成元数据时出错，文章: ${params.slug}`, error);
     return {
-      title: '文章加载错误 - 3D创意博客',
+      title: '文章加载错误 - 麻糖的博客',
       description: '加载文章时发生错误',
     };
   }
